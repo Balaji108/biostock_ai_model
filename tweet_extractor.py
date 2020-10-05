@@ -7,7 +7,7 @@ from datetime import datetime
 from tweepy import OAuthHandler
 
 
-def scrape_tweets(search_words, date_since, date_until, num_tweets):
+def scrape_tweets(stock_name, search_words, date_since, date_until, num_tweets):
     credentials = json.loads(open('twitter_keys.json').read())
 
     consumer_key = credentials['consumer_key']
@@ -19,8 +19,7 @@ def scrape_tweets(search_words, date_since, date_until, num_tweets):
     auth.set_access_token(access_key, access_secret)
     api = tweepy.API(auth)
 
-    df_tweets = pd.DataFrame(columns=['Date', 'Tweet'])
-    print('Started Tweet Extraction...')
+    df_tweets = pd.DataFrame(columns=['Stock', 'Date', 'Tweet'])
     tweets = tweepy.Cursor(api.search,
                            q=search_words,
                            lang="en",
@@ -40,8 +39,7 @@ def scrape_tweets(search_words, date_since, date_until, num_tweets):
         # Convert the time zone
         newyork_tz = timezone('America/New_York')
         newyork_time = newyork_tz.localize(tweet_created_timestamp)
-        ith_tweet = [newyork_time.date(), text]
+        ith_tweet = [stock_name, newyork_time.date(), text]
         # Append to dataframe - df_tweets
         df_tweets.loc[len(df_tweets)] = ith_tweet
-    print('Completed Tweet Extraction!')
     return df_tweets
