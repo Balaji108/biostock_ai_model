@@ -7,16 +7,21 @@
 import pandas as pd
 import yfinance as yf
 
+from tweet_extractor import scrape_tweets
+from vectorizer import vectorize_tweets
+
 START_DATE = '2018-01-01'
 END_DATE = '2020-02-28'
 STOCKS = ['LLY', 'BMY', 'JNJ', 'ABBV', 'MRK', 'ZTS', 'PRGO', 'ELAN', 'TEVA', 'NVO']
 DATA_FILENAME = "data/stock_data.csv"
+TWEETS_DATA_FILENAME = "data/tweet_stock_data.csv"
 
 class StockData():
 
     def __init__(self, stocks):
         self.stocks = stocks
         self._get_stock_prices()
+	self._get_tweets()
     
     def _get_stock_prices(self):
         df = pd.DataFrame()
@@ -35,7 +40,19 @@ class StockData():
         print (f"Stock prices data available in {DATA_FILENAME}")
 
     def _get_tweets(self):
-        pass
+        stocks = " OR ".join(STOCKS)
+        search_words = "biotech stock OR pharma stock (" + stocks +  ") -filter:retweets"
+        num_tweets = 50
+
+        df_tweets = scrape_tweets(search_words, START_DATE, END_DATE, num_tweets)
+        df_tweets = vectorize_tweets(df_tweets)
+
+        # Store the data in a csv file
+        df_tweets.to_csv('new_stock_tweets.csv', index=False)
+
+        self.stock_tweets = df_tweets
+        self.stock_tweets.to_csv(TWEETS_DATA_FILENAME)
+        print(f"Stock Tweets data available in {TWEETS_DATA_FILENAME}")
         
     def _get_news(self):
         pass
