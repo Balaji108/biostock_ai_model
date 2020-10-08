@@ -44,7 +44,7 @@ class StockData():
         df_tweets = pd.DataFrame()
         for stock in STOCKS:
             search_words = "(biotech OR  pharma) " + stock + " -filter:retweets"
-            num_tweets = 10
+            num_tweets = 500
             df_tweet = scrape_tweets(stock, search_words, START_DATE, END_DATE, num_tweets)
             if df_tweet.empty is False:
                 df_tweet = vectorize_tweets(df_tweet)

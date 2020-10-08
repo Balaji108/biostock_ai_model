@@ -38,4 +38,6 @@ def vectorize_tweets(df_tweet):
     vectorizer = TfidfVectorizer(max_features=5000)
     vectorized_data = vectorizer.fit_transform(data['text_final'])
     df_tweet['Tweet Vector'] = list(vectorized_data.toarray())
+    df_tweet['Tweet Vector'] = df_tweet['Tweet Vector'].apply(tuple)
+    df_tweet.drop_duplicates(subset=['Stock', 'Tweet Vector'], keep='first', inplace=True)
     return df_tweet
