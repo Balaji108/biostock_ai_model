@@ -1,3 +1,4 @@
+import re
 import json
 import time
 import tweepy
@@ -26,8 +27,8 @@ def scrape_tweets(stock_name, search_words, date_since, date_until, num_tweets):
                            since=date_since,
                            # until=date_until,
                            tweet_mode='extended').items(num_tweets)
-
-    tweet_list = [tweet for tweet in tweets]
+    tweet_list = []
+    tweet_list = [tweet for tweet in tweets if tweet not in tweet_list]
 
     for tweet in tweet_list:
         # Pull the values
@@ -36,6 +37,8 @@ def scrape_tweets(stock_name, search_words, date_since, date_until, num_tweets):
             text = tweet.retweeted_status.full_text
         except AttributeError:  # Not a Retweet
             text = tweet.full_text
+        # Remove the url from tweets
+        text = re.sub(r"http\S+", "", text)
         # Convert the time zone
         newyork_tz = timezone('America/New_York')
         newyork_time = newyork_tz.localize(tweet_created_timestamp)
