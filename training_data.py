@@ -41,14 +41,9 @@ class StockData():
         print(f"Stock prices data available in {DATA_FILENAME}")
 
     def _get_tweets(self):
-        df_tweets = pd.DataFrame()
-        for stock in STOCKS:
-            search_words = "(biotech OR  pharma) " + stock + " -filter:retweets"
-            num_tweets = 500
-            df_tweet = scrape_tweets(stock, search_words, START_DATE, END_DATE, num_tweets)
-            if df_tweet.empty is False:
-                df_tweet = vectorize_tweets(df_tweet)
-                df_tweets = df_tweets.append(df_tweet, ignore_index=True)
+        df_tweet = scrape_tweets(STOCKS)
+        print(df_tweet.head(5))
+        df_tweets = vectorize_tweets(df_tweet)
         self.stock_tweets = df_tweets
         self.stock_tweets.to_csv(TWEETS_DATA_FILENAME)
         print(f"Stock Tweets data available in {TWEETS_DATA_FILENAME}")

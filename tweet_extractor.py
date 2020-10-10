@@ -7,42 +7,52 @@ from pytz import timezone
 from datetime import datetime
 from tweepy import OAuthHandler
 
+# New york time zone
+new_york_tz = timezone('America/New_York')
 
-def scrape_tweets(stock_name, search_words, date_since, date_until, num_tweets):
-    credentials = json.loads(open('twitter_keys.json').read())
+credentials = json.loads(open('twitter_keys.json').read())
+consumer_key = credentials['consumer_key']
+consumer_secret = credentials['consumer_secret']
+access_key = credentials['access_key']
+access_secret = credentials['access_secret']
 
-    consumer_key = credentials['consumer_key']
-    consumer_secret = credentials['consumer_secret']
-    access_key = credentials['access_key']
-    access_secret = credentials['access_secret']
+auth = OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_key, access_secret)
+api = tweepy.API(auth)
 
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_key, access_secret)
-    api = tweepy.API(auth)
 
-    df_tweets = pd.DataFrame(columns=['Stock', 'Date', 'Tweet'])
-    tweets = tweepy.Cursor(api.search,
-                           q=search_words,
-                           lang="en",
-                           since=date_since,
-                           # until=date_until,
-                           tweet_mode='extended').items(num_tweets)
-    tweet_list = []
-    tweet_list = [tweet for tweet in tweets if tweet not in tweet_list]
+def fetch_tweets(tweet_ids, stock_name):
+    list_of_tweet_status = api.statuses_lookup(tweet_ids)
+    df_tweet = pd.DataFrame()
+    for status in list_of_tweet_status:
+        tweet_created_timestamp = status.created_at  # Get the timestamp
+        text = status.text  # Get the tweet
+        text = re.sub(r"http\S+", "", text)  # Remove links from the tweet
+        new_york_time = new_york_tz.localize(tweet_created_timestamp)  # Convert the time zone
+        tweet_elem = {
+            "Stock": stock_name,
+            "Date": new_york_time.date(),
+            "Tweet": text
+        }
+        df_tweet = df_tweet.append(tweet_elem, ignore_index=True)
+    return df_tweet
 
-    for tweet in tweet_list:
-        # Pull the values
-        tweet_created_timestamp = tweet.created_at
-        try:
-            text = tweet.retweeted_status.full_text
-        except AttributeError:  # Not a Retweet
-            text = tweet.full_text
-        # Remove the url from tweets
-        text = re.sub(r"http\S+", "", text)
-        # Convert the time zone
-        newyork_tz = timezone('America/New_York')
-        newyork_time = newyork_tz.localize(tweet_created_timestamp)
-        ith_tweet = [stock_name, newyork_time.date(), text]
-        # Append to dataframe - df_tweets
-        df_tweets.loc[len(df_tweets)] = ith_tweet
+
+def scrape_tweets(stocks):
+    # Create a dataframe to store values
+    df_tweets = pd.DataFrame()
+    # Append the stock links of all stocks into a single dataframe along with their respective name
+    for stock in stocks:
+        file_name = stock + ".txt"
+        tweet_url = pd.read_csv(file_name, index_col=None, header=None, names=["links"])
+        link = lambda x: x["links"].split("/")[-1]
+        tweet_url['id'] = tweet_url.apply(link, axis=1)
+        ids = tweet_url['id'].tolist()
+        # Get the value of chunk to extract tweets using id
+        total_count = len(ids)
+        chunks = (total_count - 1) // 50 + 1
+        for i in range(chunks):
+            batch = ids[i * 50:(i + 1) * 50]
+            df_tweet_out = fetch_tweets(batch, stock)
+            df_tweets = df_tweets.append(df_tweet_out, ignore_index=True)
     return df_tweets
