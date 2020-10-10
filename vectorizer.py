@@ -30,9 +30,9 @@ def lemmatize_data(corpus):
 
 def vectorize_tweets(df_tweet):
     data = df_tweet.copy()
-    # 1. Preprocess the data
+    # Preprocess the data
     data = preprocess_data(data)
-    # 2. Perform Lemmatization
+    # Perform Lemmatization
     data = lemmatize_data(data)
     # TfIdf Vectorization
     vectorizer = TfidfVectorizer(max_features=5000)
