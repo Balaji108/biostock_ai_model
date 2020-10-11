@@ -35,7 +35,7 @@ def vectorize_tweets(df_tweet):
     # Perform Lemmatization
     data = lemmatize_data(data)
     # TfIdf Vectorization
-    vectorizer = TfidfVectorizer(max_features=5000)
+    vectorizer = TfidfVectorizer(max_features=1000)
     vectorized_data = vectorizer.fit_transform(data['text_final'])
     df_tweet['Tweet Vector'] = list(vectorized_data.toarray())
     df_tweet['Tweet Vector'] = df_tweet['Tweet Vector'].apply(tuple)
